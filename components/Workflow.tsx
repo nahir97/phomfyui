@@ -1,0 +1,53 @@
+"use client";
+
+import { workflowTemplate } from "@/lib/comfy";
+import { Layers, Zap, Box, Activity } from "lucide-react";
+
+export function Workflow() {
+  const nodes = Object.entries(workflowTemplate);
+
+  return (
+    <div className="flex flex-col gap-8 p-6">
+      <header className="flex flex-col gap-1">
+        <h1 className="font-display text-4xl font-bold tracking-tighter uppercase italic text-accent-secondary">
+          Workflow
+        </h1>
+        <p className="text-foreground/40 text-sm font-medium tracking-wide uppercase">
+          Logic visualization
+        </p>
+      </header>
+
+      <div className="flex flex-col gap-4 pb-24">
+        {nodes.map(([id, node]: [string, any]) => (
+          <div 
+            key={id}
+            className="glass rounded-2xl p-4 flex items-center justify-between group hover:border-accent-secondary/30 transition-colors"
+          >
+            <div className="flex items-center gap-4">
+              <div className="w-10 h-10 rounded-xl bg-white/5 flex items-center justify-center text-accent-secondary/40 group-hover:text-accent-secondary transition-colors">
+                {node.class_type.includes("Sampler") ? <Zap size={18} /> : 
+                 node.class_type.includes("Loader") ? <Box size={18} /> : 
+                 node.class_type.includes("Encode") ? <Activity size={18} /> :
+                 <Layers size={18} />}
+              </div>
+              <div className="flex flex-col">
+                <h3 className="text-sm font-black uppercase tracking-tight">
+                  {node._meta?.title || node.class_type}
+                </h3>
+                <p className="text-[10px] text-foreground/40 font-mono">
+                  NODE #{id} • {node.class_type}
+                </p>
+              </div>
+            </div>
+            
+            <div className="px-3 py-1 bg-white/5 rounded-full">
+              <span className="text-[10px] font-black uppercase tracking-widest text-foreground/30 group-hover:text-accent-secondary/60">
+                Active
+              </span>
+            </div>
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+}
