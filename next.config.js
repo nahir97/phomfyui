@@ -1,7 +1,11 @@
 /** @type {import('next').NextConfig} */
 const nextConfig = {
-  experimental: {
-    allowedDevOrigins: ["0.0.0.0", "localhost", "*"],
+  turbopack: {},
+  webpack: (config) => {
+    config.watchOptions = {
+      ignored: ['**/data/**', '**/node_modules/**'],
+    };
+    return config;
   },
 };
 

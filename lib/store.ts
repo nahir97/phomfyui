@@ -18,6 +18,8 @@ interface AppState {
   progress: number;
   gallery: GalleryImage[];
   currentImage: string | null;
+  models: string[];
+  selectedModel: string;
   
   setServerUrl: (url: string) => void;
   setPrompt: (prompt: string) => void;
@@ -26,6 +28,8 @@ interface AppState {
   addToGallery: (image: GalleryImage) => void;
   setGallery: (gallery: GalleryImage[]) => void;
   setCurrentImage: (url: string | null) => void;
+  setModels: (models: string[]) => void;
+  setSelectedModel: (model: string) => void;
 }
 
 export const useStore = create<AppState>()(
@@ -38,6 +42,8 @@ export const useStore = create<AppState>()(
       progress: 0,
       gallery: [],
       currentImage: null,
+      models: [],
+      selectedModel: 'novaAnimeXL_ilV140.safetensors',
 
       setServerUrl: (url) => set({ serverUrl: url }),
       setPrompt: (prompt) => set({ prompt }),
@@ -59,14 +65,18 @@ export const useStore = create<AppState>()(
       }),
       setGallery: (gallery) => set({ gallery }),
       setCurrentImage: (url) => set({ currentImage: url }),
+      setModels: (models) => set({ models }),
+      setSelectedModel: (model) => set({ selectedModel: model }),
     }),
     {
       name: 'comfy-phone-storage',
       partialize: (state) => ({ 
         serverUrl: state.serverUrl, 
         gallery: state.gallery,
-        prompt: state.prompt 
+        prompt: state.prompt,
+        selectedModel: state.selectedModel
       }),
     }
   )
 );
+

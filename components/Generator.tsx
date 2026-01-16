@@ -9,22 +9,22 @@ import { cn } from "@/lib/utils";
 import { motion, AnimatePresence } from "framer-motion";
 
 export function Generator() {
-  const { 
-    serverUrl, 
-    clientId, 
-    prompt, 
-    setPrompt, 
-    isGenerating, 
-    setIsGenerating, 
-    progress, 
-    setProgress,
-    addToGallery,
-    currentImage,
-    setCurrentImage
-  } = useStore();
+  const serverUrl = useStore((state) => state.serverUrl);
+  const clientId = useStore((state) => state.clientId);
+  const prompt = useStore((state) => state.prompt);
+  const setPrompt = useStore((state) => state.setPrompt);
+  const isGenerating = useStore((state) => state.isGenerating);
+  const setIsGenerating = useStore((state) => state.setIsGenerating);
+  const progress = useStore((state) => state.progress);
+  const setProgress = useStore((state) => state.setProgress);
+  const addToGallery = useStore((state) => state.addToGallery);
+  const currentImage = useStore((state) => state.currentImage);
+  const setCurrentImage = useStore((state) => state.setCurrentImage);
+  const selectedModel = useStore((state) => state.selectedModel);
 
   const [ws, setWs] = useState<WebSocket | null>(null);
   const [error, setError] = useState<string | null>(null);
+
 
   useEffect(() => {
     if (typeof window === "undefined") return;
@@ -52,8 +52,25 @@ export function Generator() {
             url,
             prompt,
             timestamp: Date.now(),
-            workflow: workflowTemplate
+            workflow: {
+              ...workflowTemplate,
+              "4": {
+                ...workflowTemplate["4"],
+                inputs: {
+                  ...workflowTemplate["4"].inputs,
+                  ckpt_name: selectedModel
+                }
+              },
+              "6": {
+                ...workflowTemplate["6"],
+                inputs: {
+                  ...workflowTemplate["6"].inputs,
+                  text: prompt
+                }
+              }
+            }
           });
+
           setCurrentImage(url);
           setIsGenerating(false);
           setProgress(0);
@@ -77,15 +94,16 @@ export function Generator() {
     setProgress(0);
 
     try {
-      await queuePrompt(serverUrl, clientId, prompt);
+      await queuePrompt(serverUrl, clientId, prompt, selectedModel);
     } catch (err) {
+
       setError("Failed to queue prompt. Is ComfyUI running?");
       setIsGenerating(false);
     }
   };
 
   return (
-    <div className="h-[100dvh] w-full flex flex-col relative overflow-hidden">
+    <div className="min-h-[100dvh] w-full flex flex-col relative">
       {/* Immersive Background / Image Area */}
       <div className="absolute inset-0 z-0 bg-background/50">
         <AnimatePresence mode="wait">
@@ -146,7 +164,7 @@ export function Generator() {
       </div>
 
       {/* HUD Controls Overlay */}
-      <div className="relative z-10 flex flex-col justify-between h-full pointer-events-none">
+      <div className="relative z-10 flex flex-col justify-between min-h-[100dvh] pointer-events-none">
         
         {/* Top Bar */}
         <div className="p-6 pointer-events-auto flex justify-between items-start bg-gradient-to-b from-black/80 to-transparent">

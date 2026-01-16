@@ -7,8 +7,10 @@ import { useState } from "react";
 import { cn } from "@/lib/utils";
 
 export function Gallery() {
-  const { gallery, setCurrentImage } = useStore();
+  const gallery = useStore((state) => state.gallery);
+  const setCurrentImage = useStore((state) => state.setCurrentImage);
   const [selectedImage, setSelectedImage] = useState<string | null>(null);
+
 
   return (
     <div className="flex flex-col gap-6 p-6">

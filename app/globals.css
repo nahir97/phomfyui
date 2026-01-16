@@ -47,3 +47,10 @@
   -ms-overflow-style: none;  /* IE and Edge */
   scrollbar-width: none;  /* Firefox */
 }
+
+/* Fix for native select dropdowns in dark mode */
+select option {
+  background-color: #121214;
+  color: white;
+}
+

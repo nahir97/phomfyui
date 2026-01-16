@@ -1,13 +1,46 @@
 "use client";
 
 import { useStore } from "@/lib/store";
-import { Server, ShieldCheck, Database, RefreshCw } from "lucide-react";
+import { Server, ShieldCheck, Database, RefreshCw, Box } from "lucide-react";
+import { getModels } from "@/lib/comfy";
+import { useEffect, useState } from "react";
 
 export function Settings() {
-  const { serverUrl, setServerUrl, clientId } = useStore();
+  const serverUrl = useStore((state) => state.serverUrl);
+  const setServerUrl = useStore((state) => state.setServerUrl);
+  const clientId = useStore((state) => state.clientId);
+  const models = useStore((state) => state.models);
+  const setModels = useStore((state) => state.setModels);
+  const selectedModel = useStore((state) => state.selectedModel);
+  const setSelectedModel = useStore((state) => state.setSelectedModel);
+
+  const [isLoadingModels, setIsLoadingModels] = useState(false);
+
+  useEffect(() => {
+    const fetchModels = async () => {
+      // Validate serverUrl before fetching to avoid spamming bad requests
+      if (!serverUrl || !serverUrl.startsWith('http')) return;
+      
+      setIsLoadingModels(true);
+      try {
+        const fetchedModels = await getModels(serverUrl);
+        // Only update if the models have actually changed to avoid unnecessary re-renders
+        if (JSON.stringify(fetchedModels) !== JSON.stringify(models)) {
+          setModels(fetchedModels);
+        }
+      } catch (error) {
+        console.error("Failed to fetch models", error);
+      } finally {
+        setIsLoadingModels(false);
+      }
+    };
+
+    fetchModels();
+  }, [serverUrl, setModels]);
 
   return (
-    <div className="flex flex-col gap-8 p-6">
+
+    <div className="flex flex-col gap-8 p-6 pb-24">
       <header className="flex flex-col gap-1">
         <h1 className="font-display text-4xl font-bold tracking-tighter uppercase italic text-foreground">
           Control
@@ -39,7 +72,42 @@ export function Settings() {
           </p>
         </div>
 
+        <div className="flex flex-col gap-3">
+          <label className="text-[10px] font-black uppercase tracking-widest text-foreground/40 ml-1 flex items-center gap-2">
+            <Box size={12} /> Active Checkpoint
+          </label>
+          <div className="relative">
+            <select
+              value={selectedModel}
+              onChange={(e) => setSelectedModel(e.target.value)}
+              className="w-full bg-white/5 border-2 border-white/5 rounded-2xl p-4 pr-12 font-medium text-foreground focus:outline-none focus:border-accent/50 transition-colors appearance-none cursor-pointer [color-scheme:dark]"
+              disabled={isLoadingModels || models.length === 0}
+            >
+              {models.length === 0 ? (
+                <option value={selectedModel} className="bg-background text-foreground">{selectedModel}</option>
+              ) : (
+                models.map((model) => (
+                  <option key={model} value={model} className="bg-background text-foreground">
+                    {model}
+                  </option>
+                ))
+              )}
+            </select>
+            <div className="absolute right-4 top-1/2 -translate-y-1/2 pointer-events-none">
+              {isLoadingModels ? (
+                <RefreshCw className="text-accent animate-spin" size={20} />
+              ) : (
+                <Box className="text-accent/40" size={20} />
+              )}
+            </div>
+          </div>
+          <p className="text-[10px] text-foreground/20 italic">
+            Select the model for generation
+          </p>
+        </div>
+
         <div className="glass rounded-3xl p-6 flex flex-col gap-4">
+
           <div className="flex items-center justify-between">
             <div className="flex flex-col">
               <h3 className="font-display font-bold uppercase italic tracking-tighter text-lg">

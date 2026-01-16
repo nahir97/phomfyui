@@ -1,8 +1,8 @@
-import { useStore } from './store';
 
 export const workflowTemplate = {
   "4": {
     "inputs": {
+
       "ckpt_name": "novaAnimeXL_ilV140.safetensors"
     },
     "class_type": "CheckpointLoaderSimple",
@@ -272,14 +272,20 @@ export const workflowTemplate = {
   }
 };
 
-export async function queuePrompt(serverUrl: string, clientId: string, prompt: string) {
+export async function queuePrompt(serverUrl: string, clientId: string, prompt: string, model?: string) {
   const baseUrl = serverUrl.replace(/\s/g, '');
   const workflow = JSON.parse(JSON.stringify(workflowTemplate));
   
   // Update prompt in node 6
   workflow["6"].inputs.text = prompt;
+
+  // Update model in node 4 if provided
+  if (model) {
+    workflow["4"].inputs.ckpt_name = model;
+  }
   
   // Random seed for node 15
+
   const seed = Math.floor(Math.random() * 1000000000);
   workflow["15"].inputs.seed = seed;
 
@@ -313,3 +319,19 @@ export function getImageUrl(serverUrl: string, filename: string, subfolder: stri
   const baseUrl = serverUrl.replace(/\s/g, '');
   return `${baseUrl}/view?filename=${filename}&subfolder=${subfolder}&type=${type}`;
 }
+
+export async function getModels(serverUrl: string): Promise<string[]> {
+  const baseUrl = serverUrl.replace(/\s/g, '');
+  try {
+    const response = await fetch(`${baseUrl}/object_info/CheckpointLoaderSimple`);
+    if (!response.ok) {
+      throw new Error('Failed to fetch models');
+    }
+    const data = await response.json();
+    return data.CheckpointLoaderSimple.input.required.ckpt_name[0];
+  } catch (error) {
+    console.error('Error fetching models:', error);
+    return [];
+  }
+}
+

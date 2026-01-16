@@ -2,9 +2,12 @@
 
 import { workflowTemplate } from "@/lib/comfy";
 import { Layers, Zap, Box, Activity } from "lucide-react";
+import { useStore } from "@/lib/store";
 
 export function Workflow() {
+  const selectedModel = useStore((state) => state.selectedModel);
   const nodes = Object.entries(workflowTemplate);
+
 
   return (
     <div className="flex flex-col gap-8 p-6">
@@ -36,7 +39,9 @@ export function Workflow() {
                 </h3>
                 <p className="text-[10px] text-foreground/40 font-mono">
                   NODE #{id} • {node.class_type}
+                  {id === "4" && ` • ${selectedModel}`}
                 </p>
+
               </div>
             </div>
             

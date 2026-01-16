@@ -38,7 +38,7 @@ export default function RootLayout({
       <body className={`${inter.variable} ${spaceGrotesk.variable} font-body bg-background text-foreground`}>
         <ThemeProvider>
           <div className="flex flex-col min-h-[100dvh]">
-            <main className="flex-1 overflow-y-auto no-scrollbar pb-24">
+            <main className="flex-1 overflow-y-auto">
               {children}
             </main>
           </div>

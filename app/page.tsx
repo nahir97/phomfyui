@@ -11,7 +11,8 @@ import { useStore } from "@/lib/store";
 
 export default function Home() {
   const [activeTab, setActiveTab] = useState("generate");
-  const { setGallery } = useStore();
+  const setGallery = useStore((state) => state.setGallery);
+
 
   useEffect(() => {
     // Initial sync
@@ -37,7 +38,7 @@ export default function Home() {
   };
 
   return (
-    <div className="relative min-h-screen">
+    <div className="relative min-h-[100dvh]">
       {/* Background Decorative Elements */}
       <div className="fixed inset-0 overflow-hidden pointer-events-none">
         <div className="absolute top-[-10%] left-[-10%] w-[40%] h-[40%] bg-accent/5 blur-[120px] rounded-full" />
