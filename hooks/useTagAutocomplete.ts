@@ -71,11 +71,26 @@ export function useTagAutocomplete() {
     const before = textValue.substring(0, start);
     const after = textValue.substring(end);
     
-    // Add space after tag if it's not at the very end or doesn't already have one
-    const spacer = after.startsWith(' ') ? '' : ' ';
+    // Determine the text to insert and where the cursor should land
+    const tagToInsert = tag.name;
+    let suffix = ", ";
+    let jumpOffset = 0;
+
+    if (after.startsWith(", ")) {
+      suffix = "";
+      jumpOffset = 2; // Jump over existing ", "
+    } else if (after.startsWith(",")) {
+      suffix = " ";
+      jumpOffset = 1; // Jump over existing "," and add the missing space
+    } else if (after.startsWith(" ")) {
+      suffix = ",";
+      jumpOffset = 1; // Add comma and jump over existing " "
+    }
     
-    const newText = `${before}${tag.name}${spacer}${after}`;
-    const newCursorPosition = before.length + tag.name.length + spacer.length;
+    const newText = `${before}${tagToInsert}${suffix}${after}`;
+    const newCursorPosition = before.length + tagToInsert.length + suffix.length + jumpOffset;
+
+    return { text: newText, newCursorPosition };
 
     return { text: newText, newCursorPosition };
   };
