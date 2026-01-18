@@ -1,7 +1,7 @@
 "use client";
 
 import { useStore } from "@/lib/store";
-import { Server, ShieldCheck, Database, RefreshCw, Box } from "lucide-react";
+import { Server, ShieldCheck, Database, RefreshCw, Box, Upload, FileJson, Hash } from "lucide-react";
 import { getModels } from "@/lib/comfy";
 import { useEffect, useState } from "react";
 
@@ -13,8 +13,57 @@ export function Settings() {
   const setModels = useStore((state) => state.setModels);
   const selectedModel = useStore((state) => state.selectedModel);
   const setSelectedModel = useStore((state) => state.setSelectedModel);
+  
+  const workflow = useStore((state) => state.workflow);
+  const setWorkflow = useStore((state) => state.setWorkflow);
+  const promptNodeId = useStore((state) => state.promptNodeId);
+  const setPromptNodeId = useStore((state) => state.setPromptNodeId);
+  const modelNodeId = useStore((state) => state.modelNodeId);
+  const setModelNodeId = useStore((state) => state.setModelNodeId);
+  const seedNodeId = useStore((state) => state.seedNodeId);
+  const setSeedNodeId = useStore((state) => state.setSeedNodeId);
 
   const [isLoadingModels, setIsLoadingModels] = useState(false);
+
+  const handleFileUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    const reader = new FileReader();
+    reader.onload = (event) => {
+      try {
+        const json = JSON.parse(event.target?.result as string);
+        setWorkflow(json);
+        
+        // Auto-detect nodes
+        const nodes = Object.entries(json);
+        
+        // Find prompt node (CLIPTextEncode with 'prompt' in title or just first one)
+        const promptNode = nodes.find(([_, node]: [string, any]) => 
+          node.class_type === "CLIPTextEncode" && 
+          (node._meta?.title?.toLowerCase().includes("positive") || !node._meta?.title?.toLowerCase().includes("negative"))
+        );
+        if (promptNode) setPromptNodeId(promptNode[0]);
+
+        // Find model node
+        const modelNode = nodes.find(([_, node]: [string, any]) => 
+          node.class_type === "CheckpointLoaderSimple" || node.inputs?.ckpt_name
+        );
+        if (modelNode) setModelNodeId(modelNode[0]);
+
+        // Find seed node
+        const seedNode = nodes.find(([_, node]: [string, any]) => 
+          node.class_type.includes("Seed") || node.inputs?.seed !== undefined || node.inputs?.noise_seed !== undefined
+        );
+        if (seedNode) setSeedNodeId(seedNode[0]);
+
+      } catch (err) {
+        console.error("Failed to parse workflow JSON", err);
+        alert("Invalid JSON workflow file");
+      }
+    };
+    reader.readAsText(file);
+  };
 
   useEffect(() => {
     const fetchModels = async () => {
@@ -70,6 +119,88 @@ export function Settings() {
           <p className="text-[10px] text-foreground/20 italic">
             Example: http://192.168.1.50:8188
           </p>
+        </div>
+
+        <div className="flex flex-col gap-3">
+          <label className="text-[10px] font-black uppercase tracking-widest text-foreground/40 ml-1 flex items-center gap-2">
+            <FileJson size={12} /> Workflow Configuration
+          </label>
+          
+          <div className="glass rounded-2xl p-4 flex flex-col gap-4">
+            <div className="flex items-center justify-between">
+              <div className="flex flex-col">
+                <span className="text-xs font-bold uppercase tracking-tight">
+                  {workflow ? "Custom Workflow Active" : "Default Workflow"}
+                </span>
+                <span className="text-[10px] text-foreground/40 font-mono">
+                  {workflow ? `${Object.keys(workflow).length} Nodes Detected` : "comfy.ts template"}
+                </span>
+              </div>
+              <label className="cursor-pointer bg-accent text-black px-4 py-2 rounded-xl text-xs font-bold uppercase flex items-center gap-2 hover:scale-105 active:scale-95 transition-all">
+                <Upload size={14} />
+                Import JSON
+                <input type="file" accept=".json" onChange={handleFileUpload} className="hidden" />
+              </label>
+            </div>
+            
+            <p className="text-[9px] text-foreground/30 italic">
+              Note: You must export your workflow from ComfyUI as "API Format" (requires Dev mode enabled in ComfyUI settings).
+            </p>
+
+            {workflow && (
+              <div className="grid grid-cols-2 gap-3 pt-2 border-t border-white/5">
+                <div className="flex flex-col gap-1">
+                  <label className="text-[8px] font-black uppercase tracking-widest text-foreground/40 ml-1">Prompt Node ID</label>
+                  <div className="relative">
+                    <input 
+                      type="text" 
+                      value={promptNodeId} 
+                      onChange={(e) => setPromptNodeId(e.target.value)}
+                      className="w-full bg-white/5 border border-white/10 rounded-lg p-2 text-xs font-mono focus:outline-none focus:border-accent/50"
+                    />
+                    <Hash size={10} className="absolute right-2 top-1/2 -translate-y-1/2 text-foreground/20" />
+                  </div>
+                </div>
+                <div className="flex flex-col gap-1">
+                  <label className="text-[8px] font-black uppercase tracking-widest text-foreground/40 ml-1">Model Node ID</label>
+                  <div className="relative">
+                    <input 
+                      type="text" 
+                      value={modelNodeId} 
+                      onChange={(e) => setModelNodeId(e.target.value)}
+                      className="w-full bg-white/5 border border-white/10 rounded-lg p-2 text-xs font-mono focus:outline-none focus:border-accent/50"
+                    />
+                    <Hash size={10} className="absolute right-2 top-1/2 -translate-y-1/2 text-foreground/20" />
+                  </div>
+                </div>
+                <div className="flex flex-col gap-1">
+                  <label className="text-[8px] font-black uppercase tracking-widest text-foreground/40 ml-1">Seed Node ID</label>
+                  <div className="relative">
+                    <input 
+                      type="text" 
+                      value={seedNodeId} 
+                      onChange={(e) => setSeedNodeId(e.target.value)}
+                      className="w-full bg-white/5 border border-white/10 rounded-lg p-2 text-xs font-mono focus:outline-none focus:border-accent/50"
+                    />
+                    <Hash size={10} className="absolute right-2 top-1/2 -translate-y-1/2 text-foreground/20" />
+                  </div>
+                </div>
+                <div className="flex flex-col gap-1 justify-end">
+                  <button 
+                    onClick={() => {
+                      setWorkflow(null);
+                      setPromptNodeId("6");
+                      setModelNodeId("4");
+                      setSeedNodeId("15");
+                    }}
+                    className="w-full bg-white/5 border border-white/10 rounded-lg p-2 text-[8px] font-black uppercase tracking-widest text-red-400/60 hover:bg-red-500/10 transition-colors"
+                  >
+                    Reset to Default
+                  </button>
+                </div>
+              </div>
+            )}
+          </div>
         </div>
 
         <div className="flex flex-col gap-3">

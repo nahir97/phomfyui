@@ -272,28 +272,58 @@ export const workflowTemplate = {
   }
 };
 
-export async function queuePrompt(serverUrl: string, clientId: string, prompt: string, model?: string) {
+export async function queuePrompt(
+  serverUrl: string, 
+  clientId: string, 
+  prompt: string, 
+  model?: string,
+  customWorkflow?: any,
+  nodeIds?: {
+    promptNodeId?: string;
+    negativePromptNodeId?: string;
+    seedNodeId?: string;
+    modelNodeId?: string;
+  }
+) {
   const baseUrl = serverUrl.replace(/\s/g, '');
-  const workflow = JSON.parse(JSON.stringify(workflowTemplate));
+  const workflow = JSON.parse(JSON.stringify(customWorkflow || workflowTemplate));
   
-  // Update prompt in node 6
-  workflow["6"].inputs.text = prompt;
+  const pId = nodeIds?.promptNodeId || "6";
+  const mId = nodeIds?.modelNodeId || "4";
+  const sId = nodeIds?.seedNodeId || "15";
 
-  // Update model in node 4 if provided
-  if (model) {
-    workflow["4"].inputs.ckpt_name = model;
+  // Update prompt
+  if (workflow[pId]) {
+    workflow[pId].inputs.text = prompt;
+  }
+
+  // Update model if provided
+  if (model && workflow[mId]) {
+    workflow[mId].inputs.ckpt_name = model;
   }
   
-  // Random seed for node 15
-
+  // Random seed
   const seed = Math.floor(Math.random() * 1000000000);
-  workflow["15"].inputs.seed = seed;
+  if (workflow[sId]) {
+    if (workflow[sId].class_type === "Seed (rgthree)" || workflow[sId].class_type === "KSampler" || workflow[sId].class_type === "KSamplerAdvanced") {
+      if (workflow[sId].inputs.seed !== undefined) workflow[sId].inputs.seed = seed;
+      if (workflow[sId].inputs.noise_seed !== undefined) workflow[sId].inputs.noise_seed = seed;
+    } else {
+      // Generic fallback for seed
+      for (const key in workflow[sId].inputs) {
+        if (key.toLowerCase().includes('seed')) {
+          workflow[sId].inputs[key] = seed;
+        }
+      }
+    }
+  }
 
   const response = await fetch(`${baseUrl}/prompt`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({ prompt: workflow, client_id: clientId }),
   });
+
 
   if (!response.ok) {
     throw new Error('Failed to queue prompt');

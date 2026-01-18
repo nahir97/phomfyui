@@ -20,6 +20,11 @@ interface AppState {
   currentImage: string | null;
   models: string[];
   selectedModel: string;
+  workflow: any;
+  promptNodeId: string;
+  negativePromptNodeId: string;
+  seedNodeId: string;
+  modelNodeId: string;
   
   setServerUrl: (url: string) => void;
   setPrompt: (prompt: string) => void;
@@ -30,6 +35,11 @@ interface AppState {
   setCurrentImage: (url: string | null) => void;
   setModels: (models: string[]) => void;
   setSelectedModel: (model: string) => void;
+  setWorkflow: (workflow: any) => void;
+  setPromptNodeId: (id: string) => void;
+  setNegativePromptNodeId: (id: string) => void;
+  setSeedNodeId: (id: string) => void;
+  setModelNodeId: (id: string) => void;
 }
 
 export const useStore = create<AppState>()(
@@ -44,6 +54,11 @@ export const useStore = create<AppState>()(
       currentImage: null,
       models: [],
       selectedModel: 'novaAnimeXL_ilV140.safetensors',
+      workflow: null,
+      promptNodeId: "6",
+      negativePromptNodeId: "7",
+      seedNodeId: "15",
+      modelNodeId: "4",
 
       setServerUrl: (url) => set({ serverUrl: url }),
       setPrompt: (prompt) => set({ prompt }),
@@ -67,6 +82,11 @@ export const useStore = create<AppState>()(
       setCurrentImage: (url) => set({ currentImage: url }),
       setModels: (models) => set({ models }),
       setSelectedModel: (model) => set({ selectedModel: model }),
+      setWorkflow: (workflow) => set({ workflow }),
+      setPromptNodeId: (promptNodeId) => set({ promptNodeId }),
+      setNegativePromptNodeId: (negativePromptNodeId) => set({ negativePromptNodeId }),
+      setSeedNodeId: (seedNodeId) => set({ seedNodeId }),
+      setModelNodeId: (modelNodeId) => set({ modelNodeId }),
     }),
     {
       name: 'comfy-phone-storage',
@@ -74,7 +94,12 @@ export const useStore = create<AppState>()(
         serverUrl: state.serverUrl, 
         gallery: state.gallery,
         prompt: state.prompt,
-        selectedModel: state.selectedModel
+        selectedModel: state.selectedModel,
+        workflow: state.workflow,
+        promptNodeId: state.promptNodeId,
+        negativePromptNodeId: state.negativePromptNodeId,
+        seedNodeId: state.seedNodeId,
+        modelNodeId: state.modelNodeId,
       }),
     }
   )

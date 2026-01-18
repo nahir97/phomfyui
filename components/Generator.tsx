@@ -7,6 +7,8 @@ import { useStore } from "@/lib/store";
 import { queuePrompt, createWebSocket, getImageUrl, workflowTemplate } from "@/lib/comfy";
 import { cn } from "@/lib/utils";
 import { motion, AnimatePresence } from "framer-motion";
+import { useTagAutocomplete } from "@/hooks/useTagAutocomplete";
+import { TagSuggestions } from "@/components/TagSuggestions";
 
 export function Generator() {
   const serverUrl = useStore((state) => state.serverUrl);
@@ -21,10 +23,55 @@ export function Generator() {
   const currentImage = useStore((state) => state.currentImage);
   const setCurrentImage = useStore((state) => state.setCurrentImage);
   const selectedModel = useStore((state) => state.selectedModel);
+  const customWorkflow = useStore((state) => state.workflow);
+  const promptNodeId = useStore((state) => state.promptNodeId);
+  const modelNodeId = useStore((state) => state.modelNodeId);
+  const seedNodeId = useStore((state) => state.seedNodeId);
+
+  const { suggestions, isLoading, updateActiveWord, insertTag } = useTagAutocomplete();
+  const textareaRef = useRef<HTMLTextAreaElement>(null);
+
+  const handleInput = (e: React.SyntheticEvent<HTMLTextAreaElement>) => {
+    const target = e.target as HTMLTextAreaElement;
+    updateActiveWord(target.value, target.selectionStart);
+  };
+
+  const handleTagSelect = (tag: any) => {
+    const { text, newCursorPosition } = insertTag(tag);
+    setPrompt(text);
+    updateActiveWord(text, newCursorPosition);
+    
+    if (textareaRef.current) {
+      textareaRef.current.focus();
+      requestAnimationFrame(() => {
+        textareaRef.current?.setSelectionRange(newCursorPosition, newCursorPosition);
+      });
+    }
+  };
 
   const [ws, setWs] = useState<WebSocket | null>(null);
   const [error, setError] = useState<string | null>(null);
 
+  // Refs for values used in the WebSocket callback to avoid reconnection on every change
+  const stateRef = useRef({
+    customWorkflow,
+    prompt,
+    selectedModel,
+    promptNodeId,
+    modelNodeId,
+    serverUrl
+  });
+
+  useEffect(() => {
+    stateRef.current = {
+      customWorkflow,
+      prompt,
+      selectedModel,
+      promptNodeId,
+      modelNodeId,
+      serverUrl
+    };
+  }, [customWorkflow, prompt, selectedModel, promptNodeId, modelNodeId, serverUrl]);
 
   useEffect(() => {
     if (typeof window === "undefined") return;
@@ -45,30 +92,22 @@ export function Generator() {
       if (data.type === "executed") {
         if (data.data.output.images) {
           const img = data.data.output.images[0];
-          const url = getImageUrl(serverUrl, img.filename, img.subfolder, img.type);
+          const url = getImageUrl(stateRef.current.serverUrl, img.filename, img.subfolder, img.type);
           
+          const finalWorkflow = JSON.parse(JSON.stringify(stateRef.current.customWorkflow || workflowTemplate));
+          if (finalWorkflow[stateRef.current.promptNodeId]) {
+            finalWorkflow[stateRef.current.promptNodeId].inputs.text = stateRef.current.prompt;
+          }
+          if (finalWorkflow[stateRef.current.modelNodeId]) {
+            finalWorkflow[stateRef.current.modelNodeId].inputs.ckpt_name = stateRef.current.selectedModel;
+          }
+
           addToGallery({
             id: uuidv4(),
             url,
-            prompt,
+            prompt: stateRef.current.prompt,
             timestamp: Date.now(),
-            workflow: {
-              ...workflowTemplate,
-              "4": {
-                ...workflowTemplate["4"],
-                inputs: {
-                  ...workflowTemplate["4"].inputs,
-                  ckpt_name: selectedModel
-                }
-              },
-              "6": {
-                ...workflowTemplate["6"],
-                inputs: {
-                  ...workflowTemplate["6"].inputs,
-                  text: prompt
-                }
-              }
-            }
+            workflow: finalWorkflow
           });
 
           setCurrentImage(url);
@@ -94,13 +133,17 @@ export function Generator() {
     setProgress(0);
 
     try {
-      await queuePrompt(serverUrl, clientId, prompt, selectedModel);
+      await queuePrompt(serverUrl, clientId, prompt, selectedModel, customWorkflow, {
+        promptNodeId,
+        modelNodeId,
+        seedNodeId
+      });
     } catch (err) {
-
       setError("Failed to queue prompt. Is ComfyUI running?");
       setIsGenerating(false);
     }
   };
+
 
   return (
     <div className="min-h-[100dvh] w-full flex flex-col relative">
@@ -181,11 +224,26 @@ export function Generator() {
           <div className="flex flex-col gap-3 max-w-xl mx-auto w-full">
             
             <div className="relative group">
+              <div className="absolute bottom-full left-0 w-full mb-4 z-50">
+                <TagSuggestions 
+                  suggestions={suggestions} 
+                  isLoading={isLoading} 
+                  onSelect={handleTagSelect} 
+                  className="bottom-0"
+                />
+              </div>
               <div className="absolute inset-0 bg-accent/5 rounded-2xl blur-xl group-focus-within:bg-accent/10 transition-colors" />
               <div className="relative flex items-end gap-2 bg-white/5 border border-white/10 rounded-2xl p-2 backdrop-blur-xl transition-colors duration-300 focus-within:bg-white/10 focus-within:border-white/20">
                 <textarea
+                  ref={textareaRef}
                   value={prompt}
-                  onChange={(e) => setPrompt(e.target.value)}
+                  onChange={(e) => {
+                    setPrompt(e.target.value);
+                    handleInput(e);
+                  }}
+                  onSelect={handleInput}
+                  onClick={handleInput}
+                  onKeyUp={handleInput}
                   placeholder="Describe your imagination..."
                   className="flex-1 bg-transparent border-none text-base font-medium text-white placeholder:text-white/20 focus:ring-0 resize-none h-auto min-h-[56px] max-h-[120px] py-4 px-3 no-scrollbar leading-tight"
                   rows={2}

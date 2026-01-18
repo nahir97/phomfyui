@@ -6,7 +6,10 @@ import { useStore } from "@/lib/store";
 
 export function Workflow() {
   const selectedModel = useStore((state) => state.selectedModel);
-  const nodes = Object.entries(workflowTemplate);
+  const customWorkflow = useStore((state) => state.workflow);
+  const modelNodeId = useStore((state) => state.modelNodeId);
+  const workflow = customWorkflow || workflowTemplate;
+  const nodes = Object.entries(workflow);
 
 
   return (
@@ -39,11 +42,12 @@ export function Workflow() {
                 </h3>
                 <p className="text-[10px] text-foreground/40 font-mono">
                   NODE #{id} • {node.class_type}
-                  {id === "4" && ` • ${selectedModel}`}
+                  {id === modelNodeId && ` • ${selectedModel}`}
                 </p>
 
               </div>
             </div>
+
             
             <div className="px-3 py-1 bg-white/5 rounded-full">
               <span className="text-[10px] font-black uppercase tracking-widest text-foreground/30 group-hover:text-accent-secondary/60">

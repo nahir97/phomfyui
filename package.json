@@ -4,13 +4,13 @@
   "private": true,
   "scripts": {
     "dev": "next dev --turbo -H 0.0.0.0 -p 5173",
-
     "build": "next build",
     "start": "next start -H 0.0.0.0 -p 5173",
     "lint": "next lint"
   },
   "dependencies": {
     "@tailwindcss/postcss": "^4.1.18",
+    "better-sqlite3": "^12.6.2",
     "clsx": "latest",
     "framer-motion": "latest",
     "lucide-react": "latest",
@@ -22,6 +22,7 @@
     "zustand": "latest"
   },
   "devDependencies": {
+    "@types/better-sqlite3": "^7.6.13",
     "@types/node": "latest",
     "@types/react": "latest",
     "@types/react-dom": "latest",
