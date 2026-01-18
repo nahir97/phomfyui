@@ -23,11 +23,11 @@ export function Workflow() {
         </p>
       </header>
 
-      <div className="flex flex-col gap-4 pb-24">
+      <div className="grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-3 gap-4 pb-24">
         {nodes.map(([id, node]: [string, any]) => (
           <div 
             key={id}
-            className="glass rounded-2xl p-4 flex items-center justify-between group hover:border-accent-secondary/30 transition-colors"
+            className="glass rounded-2xl p-4 flex items-center justify-between group hover:border-accent-secondary/30 transition-colors h-full"
           >
             <div className="flex items-center gap-4">
               <div className="w-10 h-10 rounded-xl bg-white/5 flex items-center justify-center text-accent-secondary/40 group-hover:text-accent-secondary transition-colors">

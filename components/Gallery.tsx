@@ -33,8 +33,9 @@ export function Gallery() {
           </p>
         </div>
       ) : (
-        <div className="grid grid-cols-2 gap-3 pb-24">
+        <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 2xl:grid-cols-6 gap-3 pb-24">
           {gallery.map((img, index) => (
+
             <motion.div
               key={img.id}
               initial={{ opacity: 0, y: 20 }}

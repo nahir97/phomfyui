@@ -168,15 +168,16 @@ export function Generator() {
                 }}
               />
               {/* Main Image - Centered and contained */}
-              <div className="absolute inset-0 flex items-center justify-center pb-48 pt-12 px-4">
+              <div className="absolute inset-0 flex items-center justify-center pb-48 lg:pb-32 pt-12 lg:pt-20 px-4">
                 <motion.img
                   initial={{ scale: 0.9, opacity: 0 }}
                   animate={{ scale: 1, opacity: 1 }}
                   src={currentImage}
                   alt="Generated"
-                  className="w-full h-full object-contain max-h-[75vh] drop-shadow-2xl rounded-lg"
+                  className="w-full h-full object-contain max-h-[75vh] lg:max-h-[85vh] drop-shadow-2xl rounded-lg"
                 />
               </div>
+
             </motion.div>
           ) : (
             <div className="absolute inset-0 flex items-center justify-center text-foreground/10">
@@ -210,9 +211,9 @@ export function Generator() {
       <div className="relative z-10 flex flex-col justify-between min-h-[100dvh] pointer-events-none">
         
         {/* Top Bar */}
-        <div className="p-6 pointer-events-auto flex justify-between items-start bg-gradient-to-b from-black/80 to-transparent">
+        <div className="p-6 lg:p-10 pointer-events-auto flex justify-between items-start bg-gradient-to-b from-black/80 to-transparent">
           <div>
-            <h1 className="font-display text-2xl font-bold tracking-tighter uppercase italic text-accent/80">
+            <h1 className="font-display text-2xl lg:text-5xl font-bold tracking-tighter uppercase italic text-accent/80">
               Generate
             </h1>
           </div>
@@ -220,10 +221,11 @@ export function Generator() {
         </div>
 
         {/* Bottom Controls */}
-        <div className="pointer-events-auto p-4 pb-28 pt-12 bg-gradient-to-t from-black via-black/90 to-transparent">
-          <div className="flex flex-col gap-3 max-w-xl mx-auto w-full">
+        <div className="pointer-events-auto p-4 lg:p-10 pb-28 lg:pb-12 pt-12 bg-gradient-to-t from-black via-black/90 to-transparent">
+          <div className="flex flex-col gap-3 max-w-xl lg:max-w-4xl mx-auto w-full">
             
             <div className="relative group">
+
               <div className="absolute bottom-full left-0 w-full mb-4 z-50">
                 <TagSuggestions 
                   suggestions={suggestions} 

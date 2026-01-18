@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from "react";
 import { Navbar } from "@/components/Navbar";
+import { Sidebar } from "@/components/Sidebar";
 import { Generator } from "@/components/Generator";
 import { Gallery } from "@/components/Gallery";
 import { Workflow } from "@/components/Workflow";
@@ -38,7 +39,10 @@ export default function Home() {
   };
 
   return (
-    <div className="relative min-h-[100dvh]">
+    <div className="relative min-h-[100dvh] flex">
+      {/* Sidebar for Desktop */}
+      <Sidebar activeTab={activeTab} setActiveTab={setActiveTab} />
+
       {/* Background Decorative Elements */}
       <div className="fixed inset-0 overflow-hidden pointer-events-none">
         <div className="absolute top-[-10%] left-[-10%] w-[40%] h-[40%] bg-accent/5 blur-[120px] rounded-full" />
@@ -46,20 +50,25 @@ export default function Home() {
         <div className="absolute inset-0 bg-[url('https://grainy-gradients.vercel.app/noise.svg')] opacity-20 brightness-100 contrast-150 pointer-events-none mix-blend-overlay" />
       </div>
 
-      <AnimatePresence mode="wait">
-        <motion.div
-          key={activeTab}
-          initial={{ opacity: 0, y: 10 }}
-          animate={{ opacity: 1, y: 0 }}
-          exit={{ opacity: 0, y: -10 }}
-          transition={{ duration: 0.3, ease: "easeOut" }}
-          className="relative z-10"
-        >
-          {renderContent()}
-        </motion.div>
-      </AnimatePresence>
+      <div className="flex-1 lg:pl-24 relative overflow-x-hidden">
+        <AnimatePresence mode="wait">
+          <motion.div
+            key={activeTab}
+            initial={{ opacity: 0, y: 10 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: -10 }}
+            transition={{ duration: 0.3, ease: "easeOut" }}
+            className="relative z-10 w-full"
+          >
+            {renderContent()}
+          </motion.div>
+        </AnimatePresence>
+      </div>
 
-      <Navbar activeTab={activeTab} setActiveTab={setActiveTab} />
+      <div className="lg:hidden">
+        <Navbar activeTab={activeTab} setActiveTab={setActiveTab} />
+      </div>
     </div>
   );
 }
+

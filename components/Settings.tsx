@@ -99,7 +99,7 @@ export function Settings() {
         </p>
       </header>
 
-      <section className="flex flex-col gap-6">
+      <section className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
         <div className="flex flex-col gap-3">
           <label className="text-[10px] font-black uppercase tracking-widest text-foreground/40 ml-1 flex items-center gap-2">
             <Server size={12} /> ComfyUI Server Address
@@ -121,7 +121,7 @@ export function Settings() {
           </p>
         </div>
 
-        <div className="flex flex-col gap-3">
+        <div className="flex flex-col gap-3 md:col-span-2 lg:col-span-1">
           <label className="text-[10px] font-black uppercase tracking-widest text-foreground/40 ml-1 flex items-center gap-2">
             <FileJson size={12} /> Workflow Configuration
           </label>
@@ -237,7 +237,8 @@ export function Settings() {
           </p>
         </div>
 
-        <div className="glass rounded-3xl p-6 flex flex-col gap-4">
+        <div className="glass rounded-3xl p-6 flex flex-col gap-4 lg:col-span-2">
+
 
           <div className="flex items-center justify-between">
             <div className="flex flex-col">
