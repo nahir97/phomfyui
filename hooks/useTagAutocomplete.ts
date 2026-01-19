@@ -7,33 +7,39 @@ export function useTagAutocomplete() {
   const [activeWord, setActiveWord] = useState('');
   const [cursorPosition, setCursorPosition] = useState(0);
   const [textValue, setTextValue] = useState('');
+  const [isCompletedTag, setIsCompletedTag] = useState(false);
 
   // Update active word based on text and cursor
   const updateActiveWord = (text: string, cursor: number) => {
     setTextValue(text);
     setCursorPosition(cursor);
     
-    // Find word boundaries
-    // Look backwards from cursor
+    // Find boundaries based on commas instead of spaces
     let start = cursor;
-    while (start > 0 && !/[\s,]/.test(text[start - 1])) {
+    while (start > 0 && text[start - 1] !== ',') {
       start--;
     }
     
-    // Look forwards from cursor to capture the rest of the word being typed/edited
     let end = cursor;
-    while (end < text.length && !/[\s,]/.test(text[end])) {
+    while (end < text.length && text[end] !== ',') {
       end++;
     }
     
-    const word = text.substring(start, end);
-    setActiveWord(word);
+    const segment = text.substring(start, end);
+    const trimmedWord = segment.trim();
+    
+    // Check if the word is followed by a comma (ignoring trailing whitespace in the segment)
+    // If the segment ends exactly at a comma in the original text, or if the next non-whitespace is a comma
+    const isCompleted = end < text.length && text[end] === ',';
+    
+    setActiveWord(trimmedWord);
+    setIsCompletedTag(isCompleted);
   };
 
   useEffect(() => {
     const handler = setTimeout(async () => {
-      // Only fetch if > 2 characters
-      if (activeWord.length > 2) {
+      // Only fetch if > 2 characters and not already completed with a comma
+      if (activeWord.length > 2 && !isCompletedTag) {
         setIsLoading(true);
         try {
           const res = await fetch(`/api/tags?q=${encodeURIComponent(activeWord)}`);
@@ -58,21 +64,26 @@ export function useTagAutocomplete() {
   }, [activeWord]);
 
   const insertTag = (tag: Tag) => {
-    // Re-calculate boundaries to replace the current active word
+    // Re-calculate boundaries based on commas
     let start = cursorPosition;
-    while (start > 0 && !/[\s,]/.test(textValue[start - 1])) {
+    while (start > 0 && textValue[start - 1] !== ',') {
       start--;
     }
     let end = cursorPosition;
-    while (end < textValue.length && !/[\s,]/.test(textValue[end])) {
+    while (end < textValue.length && textValue[end] !== ',') {
       end++;
     }
     
+    // Check if there's a leading space in the segment we are replacing to preserve it if needed
+    // or just ensure clean insertion with standard ", " suffix
     const before = textValue.substring(0, start);
-    const after = textValue.substring(end);
+    let after = textValue.substring(end);
+    
+    // If the segment had leading spaces, preserve one
+    const leadingSpace = (textValue[start] === ' ') ? ' ' : '';
     
     // Determine the text to insert and where the cursor should land
-    const tagToInsert = tag.name;
+    const tagToInsert = leadingSpace + tag.name;
     let suffix = ", ";
     let jumpOffset = 0;
 
@@ -89,8 +100,6 @@ export function useTagAutocomplete() {
     
     const newText = `${before}${tagToInsert}${suffix}${after}`;
     const newCursorPosition = before.length + tagToInsert.length + suffix.length + jumpOffset;
-
-    return { text: newText, newCursorPosition };
 
     return { text: newText, newCursorPosition };
   };
