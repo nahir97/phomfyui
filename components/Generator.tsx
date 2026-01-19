@@ -155,7 +155,7 @@ export function Generator() {
 
 
   return (
-    <div className="min-h-[100dvh] w-full flex flex-col relative">
+    <div className="h-[100dvh] w-full flex flex-col relative overflow-hidden">
       {/* Immersive Background / Image Area */}
       <div className="absolute inset-0 z-0 bg-background/50">
         <AnimatePresence mode="wait">
@@ -172,18 +172,18 @@ export function Generator() {
                 className="absolute inset-0 opacity-30 blur-[100px] scale-110"
                 style={{
                   backgroundImage: `url(${currentImage})`,
-                  backgroundSize: 'cover',
-                  backgroundPosition: 'center'
+                  backgroundSize: "cover",
+                  backgroundPosition: "center",
                 }}
               />
               {/* Main Image - Centered and contained */}
-              <div className="absolute inset-0 flex items-center justify-center pb-48 lg:pb-32 pt-12 lg:pt-20 px-4">
+              <div className="absolute inset-0 flex items-center justify-center pb-32 lg:pb-32 pt-12 lg:pt-20 px-4">
                 <motion.img
                   initial={{ scale: 0.9, opacity: 0 }}
                   animate={{ scale: 1, opacity: 1 }}
                   src={currentImage}
                   alt="Generated"
-                  className="w-full h-full object-contain max-h-[75vh] lg:max-h-[85vh] drop-shadow-2xl rounded-lg"
+                  className="w-full h-full object-contain max-h-[75dvh] lg:max-h-[85dvh] drop-shadow-2xl rounded-lg"
                 />
               </div>
 

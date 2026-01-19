@@ -13,10 +13,10 @@
 
 @layer base {
   html, body {
-    @apply h-full overflow-hidden;
+    @apply h-[100dvh] overflow-hidden overscroll-none;
   }
   body {
-    @apply bg-background text-foreground antialiased selection:bg-accent/30 overflow-x-hidden font-body;
+    @apply bg-background text-foreground antialiased selection:bg-accent/30 overflow-x-hidden font-body fixed inset-0;
     font-feature-settings: "ss01", "ss02", "cv01", "cv02";
   }
 }
