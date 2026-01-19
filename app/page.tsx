@@ -39,7 +39,7 @@ export default function Home() {
   };
 
   return (
-    <div className="relative min-h-[100dvh] flex">
+    <div className="relative h-[100dvh] flex overflow-hidden">
       {/* Sidebar for Desktop */}
       <Sidebar activeTab={activeTab} setActiveTab={setActiveTab} />
 

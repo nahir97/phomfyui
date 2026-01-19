@@ -35,9 +35,9 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="en" className="dark">
-      <body className={`${inter.variable} ${spaceGrotesk.variable} font-body bg-background text-foreground`}>
+      <body className={`${inter.variable} ${spaceGrotesk.variable} font-body bg-background text-foreground h-full`}>
         <ThemeProvider>
-          <div className="flex flex-col min-h-[100dvh]">
+          <div className="flex flex-col h-full">
             <main className="flex-1 overflow-y-auto">
               {children}
             </main>

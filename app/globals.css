@@ -12,6 +12,9 @@
 }
 
 @layer base {
+  html, body {
+    @apply h-full overflow-hidden;
+  }
   body {
     @apply bg-background text-foreground antialiased selection:bg-accent/30 overflow-x-hidden font-body;
     font-feature-settings: "ss01", "ss02", "cv01", "cv02";

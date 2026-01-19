@@ -18,7 +18,7 @@ export function Navbar({ activeTab, setActiveTab }: NavbarProps) {
   ];
 
   return (
-    <nav className="fixed bottom-0 left-0 right-0 z-50 px-6 pb-8 pt-4">
+    <nav className="fixed bottom-0 left-0 right-0 z-50 px-6 pb-[calc(1rem+env(safe-area-inset-bottom))] pt-4 lg:pb-8">
       <div className="mx-auto max-w-lg glass rounded-full px-4 py-3 flex items-center justify-between shadow-2xl shadow-black/50">
         {tabs.map((tab) => {
           const Icon = tab.icon;

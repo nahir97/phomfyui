@@ -31,6 +31,15 @@ export function Generator() {
   const { suggestions, isLoading, updateActiveWord, insertTag } = useTagAutocomplete();
   const textareaRef = useRef<HTMLTextAreaElement>(null);
 
+  // Auto-expand textarea
+  useEffect(() => {
+    if (textareaRef.current) {
+      textareaRef.current.style.height = "auto";
+      const scrollHeight = textareaRef.current.scrollHeight;
+      textareaRef.current.style.height = `${Math.min(scrollHeight, 160)}px`;
+    }
+  }, [prompt]);
+
   const handleInput = (e: React.SyntheticEvent<HTMLTextAreaElement>) => {
     const target = e.target as HTMLTextAreaElement;
     updateActiveWord(target.value, target.selectionStart);
@@ -208,10 +217,10 @@ export function Generator() {
       </div>
 
       {/* HUD Controls Overlay */}
-      <div className="relative z-10 flex flex-col justify-between min-h-[100dvh] pointer-events-none">
+      <div className="relative z-10 flex flex-col justify-between h-full min-h-[100dvh] pointer-events-none">
         
         {/* Top Bar */}
-        <div className="p-6 lg:p-10 pointer-events-auto flex justify-between items-start bg-gradient-to-b from-black/80 to-transparent">
+        <div className="p-6 lg:p-10 pointer-events-auto flex justify-between items-start bg-gradient-to-b from-black/80 to-transparent pt-[calc(1.5rem+env(safe-area-inset-top))]">
           <div>
             <h1 className="font-display text-2xl lg:text-5xl font-bold tracking-tighter uppercase italic text-accent/80">
               Generate
@@ -221,7 +230,7 @@ export function Generator() {
         </div>
 
         {/* Bottom Controls */}
-        <div className="pointer-events-auto p-4 lg:p-10 pb-28 lg:pb-12 pt-12 bg-gradient-to-t from-black via-black/90 to-transparent">
+        <div className="pointer-events-auto p-4 lg:p-10 pb-[calc(7.5rem+env(safe-area-inset-bottom))] lg:pb-12 pt-12 bg-gradient-to-t from-black via-black/90 to-transparent">
           <div className="flex flex-col gap-3 max-w-xl lg:max-w-4xl mx-auto w-full">
             
             <div className="relative group">
@@ -247,8 +256,8 @@ export function Generator() {
                   onClick={handleInput}
                   onKeyUp={handleInput}
                   placeholder="Describe your imagination..."
-                  className="flex-1 bg-transparent border-none text-base font-medium text-white placeholder:text-white/20 focus:ring-0 resize-none h-auto min-h-[56px] max-h-[120px] py-4 px-3 no-scrollbar leading-tight"
-                  rows={2}
+                  className="flex-1 bg-transparent border-none text-base font-medium text-white placeholder:text-white/20 focus:ring-0 resize-none min-h-[56px] max-h-[160px] py-4 px-3 overflow-y-auto no-scrollbar leading-tight"
+                  rows={1}
                 />
                 
                 <button
