@@ -1,9 +1,10 @@
 "use client";
 
 import { useStore } from "@/lib/store";
-import { Server, ShieldCheck, Database, RefreshCw, Box, Upload, FileJson, Hash } from "lucide-react";
-import { getModels } from "@/lib/comfy";
+import { Server, ShieldCheck, Database, RefreshCw, Box, Upload, FileJson, Hash, Settings2 } from "lucide-react";
+import { getModels, getSamplers, getSchedulers } from "@/lib/comfy";
 import { useEffect, useState } from "react";
+import { cn } from "@/lib/utils";
 
 export function Settings() {
   const serverUrl = useStore((state) => state.serverUrl);
@@ -14,6 +15,16 @@ export function Settings() {
   const selectedModel = useStore((state) => state.selectedModel);
   const setSelectedModel = useStore((state) => state.setSelectedModel);
   
+  const samplers = useStore((state) => state.samplers);
+  const setSamplers = useStore((state) => state.setSamplers);
+  const selectedSampler = useStore((state) => state.selectedSampler);
+  const setSelectedSampler = useStore((state) => state.setSelectedSampler);
+  
+  const schedulers = useStore((state) => state.schedulers);
+  const setSchedulers = useStore((state) => state.setSchedulers);
+  const selectedScheduler = useStore((state) => state.selectedScheduler);
+  const setSelectedScheduler = useStore((state) => state.setSelectedScheduler);
+
   const workflow = useStore((state) => state.workflow);
   const setWorkflow = useStore((state) => state.setWorkflow);
   const promptNodeId = useStore((state) => state.promptNodeId);
@@ -23,7 +34,7 @@ export function Settings() {
   const seedNodeId = useStore((state) => state.seedNodeId);
   const setSeedNodeId = useStore((state) => state.setSeedNodeId);
 
-  const [isLoadingModels, setIsLoadingModels] = useState(false);
+  const [isLoadingMetadata, setIsLoadingMetadata] = useState(false);
 
   const handleFileUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
@@ -66,38 +77,41 @@ export function Settings() {
   };
 
   useEffect(() => {
-    const fetchModels = async () => {
+    const fetchMetadata = async () => {
       // Validate serverUrl before fetching to avoid spamming bad requests
       if (!serverUrl || !serverUrl.startsWith('http')) return;
       
-      setIsLoadingModels(true);
+      setIsLoadingMetadata(true);
       try {
-        const fetchedModels = await getModels(serverUrl);
-        // Only update if the models have actually changed to avoid unnecessary re-renders
+        const [fetchedModels, fetchedSamplers, fetchedSchedulers] = await Promise.all([
+          getModels(serverUrl),
+          getSamplers(serverUrl),
+          getSchedulers(serverUrl)
+        ]);
+
         if (JSON.stringify(fetchedModels) !== JSON.stringify(models)) {
           setModels(fetchedModels);
         }
+        if (JSON.stringify(fetchedSamplers) !== JSON.stringify(samplers)) {
+          setSamplers(fetchedSamplers);
+        }
+        if (JSON.stringify(fetchedSchedulers) !== JSON.stringify(schedulers)) {
+          setSchedulers(fetchedSchedulers);
+        }
       } catch (error) {
-        console.error("Failed to fetch models", error);
+        console.error("Failed to fetch metadata", error);
       } finally {
-        setIsLoadingModels(false);
+        setIsLoadingMetadata(false);
       }
     };
 
-    fetchModels();
-  }, [serverUrl, setModels]);
+    fetchMetadata();
+  }, [serverUrl, setModels, setSamplers, setSchedulers]);
 
   return (
 
-    <div className="flex flex-col gap-8 p-6 pb-24">
-      <header className="flex flex-col gap-1">
-        <h1 className="font-display text-4xl font-bold tracking-tighter uppercase italic text-foreground">
-          Control
-        </h1>
-        <p className="text-foreground/40 text-sm font-medium tracking-wide uppercase">
-          System configurations
-        </p>
-      </header>
+    <div className="flex flex-col gap-8 p-6 pb-24 pt-[calc(1.5rem+env(safe-area-inset-top))]">
+
 
       <section className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
         <div className="flex flex-col gap-3">
@@ -212,7 +226,7 @@ export function Settings() {
               value={selectedModel}
               onChange={(e) => setSelectedModel(e.target.value)}
               className="w-full bg-white/5 border-2 border-white/5 rounded-2xl p-4 pr-12 font-medium text-foreground focus:outline-none focus:border-accent/50 transition-colors appearance-none cursor-pointer [color-scheme:dark]"
-              disabled={isLoadingModels || models.length === 0}
+              disabled={isLoadingMetadata || models.length === 0}
             >
               {models.length === 0 ? (
                 <option value={selectedModel} className="bg-background text-foreground">{selectedModel}</option>
@@ -225,7 +239,7 @@ export function Settings() {
               )}
             </select>
             <div className="absolute right-4 top-1/2 -translate-y-1/2 pointer-events-none">
-              {isLoadingModels ? (
+              {isLoadingMetadata ? (
                 <RefreshCw className="text-accent animate-spin" size={20} />
               ) : (
                 <Box className="text-accent/40" size={20} />
@@ -235,6 +249,60 @@ export function Settings() {
           <p className="text-[10px] text-foreground/20 italic">
             Select the model for generation
           </p>
+        </div>
+
+        <div className="flex flex-col gap-3">
+          <label className="text-[10px] font-black uppercase tracking-widest text-foreground/40 ml-1 flex items-center gap-2">
+            <Settings2 size={12} /> Sampler
+          </label>
+          <div className="relative">
+            <select
+              value={selectedSampler}
+              onChange={(e) => setSelectedSampler(e.target.value)}
+              className="w-full bg-white/5 border-2 border-white/5 rounded-2xl p-4 pr-12 font-medium text-foreground focus:outline-none focus:border-accent/50 transition-colors appearance-none cursor-pointer [color-scheme:dark]"
+              disabled={isLoadingMetadata || samplers.length === 0}
+            >
+              {samplers.length === 0 ? (
+                <option value={selectedSampler} className="bg-background text-foreground">{selectedSampler}</option>
+              ) : (
+                samplers.map((sampler) => (
+                  <option key={sampler} value={sampler} className="bg-background text-foreground">
+                    {sampler}
+                  </option>
+                ))
+              )}
+            </select>
+            <div className="absolute right-4 top-1/2 -translate-y-1/2 pointer-events-none">
+              <RefreshCw className={cn("text-accent/40", isLoadingMetadata && "animate-spin")} size={20} />
+            </div>
+          </div>
+        </div>
+
+        <div className="flex flex-col gap-3">
+          <label className="text-[10px] font-black uppercase tracking-widest text-foreground/40 ml-1 flex items-center gap-2">
+            <Settings2 size={12} /> Scheduler
+          </label>
+          <div className="relative">
+            <select
+              value={selectedScheduler}
+              onChange={(e) => setSelectedScheduler(e.target.value)}
+              className="w-full bg-white/5 border-2 border-white/5 rounded-2xl p-4 pr-12 font-medium text-foreground focus:outline-none focus:border-accent/50 transition-colors appearance-none cursor-pointer [color-scheme:dark]"
+              disabled={isLoadingMetadata || schedulers.length === 0}
+            >
+              {schedulers.length === 0 ? (
+                <option value={selectedScheduler} className="bg-background text-foreground">{selectedScheduler}</option>
+              ) : (
+                schedulers.map((scheduler) => (
+                  <option key={scheduler} value={scheduler} className="bg-background text-foreground">
+                    {scheduler}
+                  </option>
+                ))
+              )}
+            </select>
+            <div className="absolute right-4 top-1/2 -translate-y-1/2 pointer-events-none">
+              <RefreshCw className={cn("text-accent/40", isLoadingMetadata && "animate-spin")} size={20} />
+            </div>
+          </div>
         </div>
 
         <div className="glass rounded-3xl p-6 flex flex-col gap-4 lg:col-span-2">

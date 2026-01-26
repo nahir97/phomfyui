@@ -13,15 +13,7 @@ export function Workflow() {
 
 
   return (
-    <div className="flex flex-col gap-8 p-6">
-      <header className="flex flex-col gap-1">
-        <h1 className="font-display text-4xl font-bold tracking-tighter uppercase italic text-accent-secondary">
-          Workflow
-        </h1>
-        <p className="text-foreground/40 text-sm font-medium tracking-wide uppercase">
-          Logic visualization
-        </p>
-      </header>
+    <div className="flex flex-col gap-8 p-6 pt-[calc(1.5rem+env(safe-area-inset-top))]">
 
       <div className="grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-3 gap-4 pb-24">
         {nodes.map(([id, node]: [string, any]) => (

@@ -1,13 +1,68 @@
 import { create } from 'zustand';
-import { persist } from 'zustand/middleware';
+import { persist, StateStorage, createJSONStorage } from 'zustand/middleware';
 import { v4 as uuidv4 } from 'uuid';
 
+// Custom IndexedDB storage for large datasets
+const idbStorage: StateStorage = {
+  getItem: async (name: string): Promise<string | null> => {
+    return new Promise((resolve) => {
+      const request = indexedDB.open('ComfyPhoneDB', 1);
+      request.onupgradeneeded = () => {
+        request.result.createObjectStore('storage');
+      };
+      request.onsuccess = () => {
+        const db = request.result;
+        const tx = db.transaction('storage', 'readonly');
+        const store = tx.objectStore('storage');
+        const getRequest = store.get(name);
+        getRequest.onsuccess = () => resolve(getRequest.result || null);
+        getRequest.onerror = () => resolve(null);
+      };
+      request.onerror = () => resolve(null);
+    });
+  },
+  setItem: async (name: string, value: string): Promise<void> => {
+    return new Promise((resolve) => {
+      const request = indexedDB.open('ComfyPhoneDB', 1);
+      request.onupgradeneeded = () => {
+        request.result.createObjectStore('storage');
+      };
+      request.onsuccess = () => {
+        const db = request.result;
+        const tx = db.transaction('storage', 'readwrite');
+        const store = tx.objectStore('storage');
+        store.put(value, name);
+        tx.oncomplete = () => resolve();
+      };
+    });
+  },
+  removeItem: async (name: string): Promise<void> => {
+    return new Promise((resolve) => {
+      const request = indexedDB.open('ComfyPhoneDB', 1);
+      request.onsuccess = () => {
+        const db = request.result;
+        const tx = db.transaction('storage', 'readwrite');
+        const store = tx.objectStore('storage');
+        store.delete(name);
+        tx.oncomplete = () => resolve();
+      };
+    });
+  },
+};
+
 export interface GalleryImage {
+
   id: string;
   url: string;
   prompt: string;
   timestamp: number;
   workflow: any;
+}
+
+export interface PromptHistoryItem {
+  id: string;
+  text: string;
+  timestamp: number;
 }
 
 interface AppState {
@@ -17,9 +72,14 @@ interface AppState {
   isGenerating: boolean;
   progress: number;
   gallery: GalleryImage[];
+  promptHistory: PromptHistoryItem[];
   currentImage: string | null;
   models: string[];
   selectedModel: string;
+  samplers: string[];
+  selectedSampler: string;
+  schedulers: string[];
+  selectedScheduler: string;
   workflow: any;
   promptNodeId: string;
   negativePromptNodeId: string;
@@ -32,9 +92,15 @@ interface AppState {
   setProgress: (progress: number) => void;
   addToGallery: (image: GalleryImage) => void;
   setGallery: (gallery: GalleryImage[]) => void;
+  setPromptHistory: (history: PromptHistoryItem[]) => void;
+  addPromptToHistory: (prompt: PromptHistoryItem) => void;
   setCurrentImage: (url: string | null) => void;
   setModels: (models: string[]) => void;
   setSelectedModel: (model: string) => void;
+  setSamplers: (samplers: string[]) => void;
+  setSelectedSampler: (sampler: string) => void;
+  setSchedulers: (schedulers: string[]) => void;
+  setSelectedScheduler: (scheduler: string) => void;
   setWorkflow: (workflow: any) => void;
   setPromptNodeId: (id: string) => void;
   setNegativePromptNodeId: (id: string) => void;
@@ -51,9 +117,14 @@ export const useStore = create<AppState>()(
       isGenerating: false,
       progress: 0,
       gallery: [],
+      promptHistory: [],
       currentImage: null,
       models: [],
       selectedModel: 'novaAnimeXL_ilV140.safetensors',
+      samplers: [],
+      selectedSampler: 'euler_ancestral',
+      schedulers: [],
+      selectedScheduler: 'beta',
       workflow: null,
       promptNodeId: "6",
       negativePromptNodeId: "7",
@@ -79,9 +150,19 @@ export const useStore = create<AppState>()(
         };
       }),
       setGallery: (gallery) => set({ gallery }),
+      setPromptHistory: (promptHistory) => set({ promptHistory }),
+      addPromptToHistory: (item) => set((state) => {
+        const exists = state.promptHistory.some(p => p.text === item.text);
+        if (exists) return state;
+        return { promptHistory: [item, ...state.promptHistory] };
+      }),
       setCurrentImage: (url) => set({ currentImage: url }),
       setModels: (models) => set({ models }),
       setSelectedModel: (model) => set({ selectedModel: model }),
+      setSamplers: (samplers) => set({ samplers }),
+      setSelectedSampler: (selectedSampler) => set({ selectedSampler }),
+      setSchedulers: (schedulers) => set({ schedulers }),
+      setSelectedScheduler: (selectedScheduler) => set({ selectedScheduler }),
       setWorkflow: (workflow) => set({ workflow }),
       setPromptNodeId: (promptNodeId) => set({ promptNodeId }),
       setNegativePromptNodeId: (negativePromptNodeId) => set({ negativePromptNodeId }),
@@ -90,11 +171,15 @@ export const useStore = create<AppState>()(
     }),
     {
       name: 'comfy-phone-storage',
+      storage: createJSONStorage(() => idbStorage),
       partialize: (state) => ({ 
         serverUrl: state.serverUrl, 
         gallery: state.gallery,
+        promptHistory: state.promptHistory,
         prompt: state.prompt,
         selectedModel: state.selectedModel,
+        selectedSampler: state.selectedSampler,
+        selectedScheduler: state.selectedScheduler,
         workflow: state.workflow,
         promptNodeId: state.promptNodeId,
         negativePromptNodeId: state.negativePromptNodeId,

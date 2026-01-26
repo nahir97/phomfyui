@@ -16,8 +16,8 @@ export default function Home() {
 
 
   useEffect(() => {
-    // Initial sync
-    fetch('/api/gallery')
+    // Initial sync - fetch first page only
+    fetch('/api/gallery?page=1&limit=20')
       .then(res => res.json())
       .then(data => setGallery(data))
       .catch(err => console.error("Failed to sync gallery", err));

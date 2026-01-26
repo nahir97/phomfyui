@@ -283,6 +283,8 @@ export async function queuePrompt(
     negativePromptNodeId?: string;
     seedNodeId?: string;
     modelNodeId?: string;
+    sampler?: string;
+    scheduler?: string;
   }
 ) {
   const baseUrl = serverUrl.replace(/\s/g, '');
@@ -300,6 +302,19 @@ export async function queuePrompt(
   // Update model if provided
   if (model && workflow[mId]) {
     workflow[mId].inputs.ckpt_name = model;
+  }
+
+  // Update sampler and scheduler in any node that has them
+  for (const nodeId in workflow) {
+    const node = workflow[nodeId];
+    if (node.inputs) {
+      if (nodeIds?.sampler && node.inputs.sampler_name !== undefined) {
+        node.inputs.sampler_name = nodeIds.sampler;
+      }
+      if (nodeIds?.scheduler && node.inputs.scheduler !== undefined) {
+        node.inputs.scheduler = nodeIds.scheduler;
+      }
+    }
   }
   
   // Random seed
@@ -361,6 +376,36 @@ export async function getModels(serverUrl: string): Promise<string[]> {
     return data.CheckpointLoaderSimple.input.required.ckpt_name[0];
   } catch (error) {
     console.error('Error fetching models:', error);
+    return [];
+  }
+}
+
+export async function getSamplers(serverUrl: string): Promise<string[]> {
+  const baseUrl = serverUrl.replace(/\s/g, '');
+  try {
+    const response = await fetch(`${baseUrl}/object_info/KSampler`);
+    if (!response.ok) {
+      throw new Error('Failed to fetch samplers');
+    }
+    const data = await response.json();
+    return data.KSampler.input.required.sampler_name[0];
+  } catch (error) {
+    console.error('Error fetching samplers:', error);
+    return [];
+  }
+}
+
+export async function getSchedulers(serverUrl: string): Promise<string[]> {
+  const baseUrl = serverUrl.replace(/\s/g, '');
+  try {
+    const response = await fetch(`${baseUrl}/object_info/KSampler`);
+    if (!response.ok) {
+      throw new Error('Failed to fetch schedulers');
+    }
+    const data = await response.json();
+    return data.KSampler.input.required.scheduler[0];
+  } catch (error) {
+    console.error('Error fetching schedulers:', error);
     return [];
   }
 }

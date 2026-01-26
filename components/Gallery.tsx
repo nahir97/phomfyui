@@ -2,28 +2,91 @@
 
 import { useStore } from "@/lib/store";
 import { motion, AnimatePresence } from "framer-motion";
-import { X, Download, Trash2, Maximize2 } from "lucide-react";
-import { useState } from "react";
+import { X, Download, Trash2, Maximize2, Loader2 } from "lucide-react";
+import { useState, useRef, useEffect, memo, useCallback } from "react";
 import { cn } from "@/lib/utils";
+
+const GalleryItem = memo(({ img, index, onClick }: { img: any; index: number; onClick: (url: string) => void }) => {
+  return (
+    <motion.div
+      initial={{ opacity: 0, y: 20 }}
+      animate={{ opacity: 1, y: 0 }}
+      transition={{ delay: (index % 20) * 0.05 }}
+      onClick={() => onClick(img.url)}
+      className="relative aspect-[2/3] rounded-2xl overflow-hidden glass group cursor-pointer"
+    >
+      <img
+        src={img.url}
+        alt={img.prompt}
+        loading="lazy"
+        className="w-full h-full object-cover transition-transform group-hover:scale-110"
+      />
+      <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity flex items-end p-3">
+        <p className="text-[10px] text-white/70 line-clamp-2 uppercase tracking-tight font-medium">
+          {img.prompt}
+        </p>
+      </div>
+    </motion.div>
+  );
+});
 
 export function Gallery() {
   const gallery = useStore((state) => state.gallery);
+  const setGallery = useStore((state) => state.setGallery);
   const setCurrentImage = useStore((state) => state.setCurrentImage);
   const [selectedImage, setSelectedImage] = useState<string | null>(null);
+  
+  // Pagination / Infinite Scroll
+  const [page, setPage] = useState(1);
+  const [hasMore, setHasMore] = useState(true);
+  const [isLoadingMore, setIsLoadingMore] = useState(false);
+  const loadMoreRef = useRef<HTMLDivElement>(null);
 
+  const fetchMore = useCallback(async () => {
+    if (isLoadingMore || !hasMore) return;
+    setIsLoadingMore(true);
+    
+    try {
+      const nextPage = page + 1;
+      const res = await fetch(`/api/gallery?page=${nextPage}&limit=20`);
+      const data = await res.json();
+      
+      if (data.length < 20) {
+        setHasMore(false);
+      }
+      
+      if (data.length > 0) {
+        setGallery([...gallery, ...data]);
+        setPage(nextPage);
+      }
+    } catch (err) {
+      console.error("Failed to fetch more gallery items:", err);
+    } finally {
+      setIsLoadingMore(false);
+    }
+  }, [page, hasMore, isLoadingMore, gallery, setGallery]);
+
+  useEffect(() => {
+    const observer = new IntersectionObserver((entries) => {
+      if (entries[0].isIntersecting && hasMore && !isLoadingMore) {
+        fetchMore();
+      }
+    }, { threshold: 0.1 });
+
+    if (loadMoreRef.current) {
+      observer.observe(loadMoreRef.current);
+    }
+
+    return () => observer.disconnect();
+  }, [fetchMore, hasMore, isLoadingMore]);
+
+  const handleImageClick = useCallback((url: string) => {
+    setSelectedImage(url);
+  }, []);
 
   return (
-    <div className="flex flex-col gap-6 p-6">
-      <header className="flex flex-col gap-1">
-        <h1 className="font-display text-4xl font-bold tracking-tighter uppercase italic text-secondary">
-          Archives
-        </h1>
-        <p className="text-foreground/40 text-sm font-medium tracking-wide uppercase">
-          Your visual legacy ({gallery.length} items)
-        </p>
-      </header>
-
-      {gallery.length === 0 ? (
+    <div className="flex flex-col gap-6 p-6 pt-[calc(1.5rem+env(safe-area-inset-top))]">
+      {gallery.length === 0 && !isLoadingMore ? (
         <div className="flex flex-col items-center justify-center py-20 opacity-20 text-center gap-4">
           <div className="w-20 h-20 rounded-full border-2 border-dashed border-foreground flex items-center justify-center">
             <Maximize2 size={32} />
@@ -33,30 +96,28 @@ export function Gallery() {
           </p>
         </div>
       ) : (
-        <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 2xl:grid-cols-6 gap-3 pb-24">
-          {gallery.map((img, index) => (
-
-            <motion.div
-              key={img.id}
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: index * 0.05 }}
-              onClick={() => setSelectedImage(img.url)}
-              className="relative aspect-[2/3] rounded-2xl overflow-hidden glass group cursor-pointer"
-            >
-              <img
-                src={img.url}
-                alt={img.prompt}
-                className="w-full h-full object-cover transition-transform group-hover:scale-110"
+        <>
+          <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 2xl:grid-cols-6 gap-3">
+            {gallery.map((img, index) => (
+              <GalleryItem 
+                key={img.id} 
+                img={img} 
+                index={index} 
+                onClick={handleImageClick} 
               />
-              <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity flex items-end p-3">
-                <p className="text-[10px] text-white/70 line-clamp-2 uppercase tracking-tight font-medium">
-                  {img.prompt}
-                </p>
-              </div>
-            </motion.div>
-          ))}
-        </div>
+            ))}
+          </div>
+          
+          {/* Load More Sentinel */}
+          {hasMore && (
+            <div ref={loadMoreRef} className="h-24 w-full flex justify-center items-center opacity-50">
+              <Loader2 className="animate-spin text-accent" size={24} />
+            </div>
+          )}
+          
+          {/* Spacer for bottom nav */}
+          <div className="h-24" />
+        </>
       )}
 
       <AnimatePresence>

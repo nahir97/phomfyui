@@ -1,19 +1,18 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef, useCallback } from 'react';
 import { Tag } from '@/lib/tags';
 
 export function useTagAutocomplete() {
   const [suggestions, setSuggestions] = useState<Tag[]>([]);
   const [isLoading, setIsLoading] = useState(false);
   const [activeWord, setActiveWord] = useState('');
-  const [cursorPosition, setCursorPosition] = useState(0);
-  const [textValue, setTextValue] = useState('');
   const [isCompletedTag, setIsCompletedTag] = useState(false);
+  
+  // Use a ref to track if we've already cleared suggestions to avoid re-renders
+  const suggestionsClearedRef = useRef(true);
 
   // Update active word based on text and cursor
-  const updateActiveWord = (text: string, cursor: number) => {
-    setTextValue(text);
-    setCursorPosition(cursor);
-    
+  // Memoize to prevent function recreation on every render
+  const updateActiveWord = useCallback((text: string, cursor: number) => {
     // Find boundaries based on commas instead of spaces
     let start = cursor;
     while (start > 0 && text[start - 1] !== ',') {
@@ -32,11 +31,13 @@ export function useTagAutocomplete() {
     // If the segment ends exactly at a comma in the original text, or if the next non-whitespace is a comma
     const isCompleted = end < text.length && text[end] === ',';
     
-    setActiveWord(trimmedWord);
-    setIsCompletedTag(isCompleted);
-  };
+    // Only update state if changed to avoid renders
+    setActiveWord(prev => prev !== trimmedWord ? trimmedWord : prev);
+    setIsCompletedTag(prev => prev !== isCompleted ? isCompleted : prev);
+  }, []);
 
   useEffect(() => {
+    // Debounce 600ms
     const handler = setTimeout(async () => {
       // Only fetch if > 2 characters and not already completed with a comma
       if (activeWord.length > 2 && !isCompletedTag) {
@@ -45,42 +46,60 @@ export function useTagAutocomplete() {
           const res = await fetch(`/api/tags?q=${encodeURIComponent(activeWord)}`);
           if (res.ok) {
             const data = await res.json();
-            setSuggestions(data.tags || []);
+            if (data.tags && data.tags.length > 0) {
+              setSuggestions(data.tags);
+              suggestionsClearedRef.current = false;
+            } else if (!suggestionsClearedRef.current) {
+              setSuggestions([]);
+              suggestionsClearedRef.current = true;
+            }
           } else {
-            setSuggestions([]);
+            if (!suggestionsClearedRef.current) {
+              setSuggestions([]);
+              suggestionsClearedRef.current = true;
+            }
           }
         } catch (e) {
           console.error("Tag fetch error:", e);
-          setSuggestions([]);
+          if (!suggestionsClearedRef.current) {
+            setSuggestions([]);
+            suggestionsClearedRef.current = true;
+          }
         } finally {
           setIsLoading(false);
         }
       } else {
-        setSuggestions([]);
+        // Only clear if not already cleared
+        if (!suggestionsClearedRef.current) {
+          setSuggestions([]);
+          suggestionsClearedRef.current = true;
+        }
       }
-    }, 200);
+    }, 600);
 
     return () => clearTimeout(handler);
-  }, [activeWord]);
+  }, [activeWord, isCompletedTag]);
 
-  const insertTag = (tag: Tag) => {
+  // Pure function that doesn't rely on internal state for text/cursor
+  // This avoids the need to store textValue/cursorPosition in state
+  const insertTag = useCallback((tag: Tag, currentText: string, currentCursor: number) => {
     // Re-calculate boundaries based on commas
-    let start = cursorPosition;
-    while (start > 0 && textValue[start - 1] !== ',') {
+    let start = currentCursor;
+    while (start > 0 && currentText[start - 1] !== ',') {
       start--;
     }
-    let end = cursorPosition;
-    while (end < textValue.length && textValue[end] !== ',') {
+    let end = currentCursor;
+    while (end < currentText.length && currentText[end] !== ',') {
       end++;
     }
     
     // Check if there's a leading space in the segment we are replacing to preserve it if needed
     // or just ensure clean insertion with standard ", " suffix
-    const before = textValue.substring(0, start);
-    let after = textValue.substring(end);
+    const before = currentText.substring(0, start);
+    let after = currentText.substring(end);
     
     // If the segment had leading spaces, preserve one
-    const leadingSpace = (textValue[start] === ' ') ? ' ' : '';
+    const leadingSpace = (currentText[start] === ' ') ? ' ' : '';
     
     // Determine the text to insert and where the cursor should land
     const tagToInsert = leadingSpace + tag.name;
@@ -102,7 +121,7 @@ export function useTagAutocomplete() {
     const newCursorPosition = before.length + tagToInsert.length + suffix.length + jumpOffset;
 
     return { text: newText, newCursorPosition };
-  };
+  }, []);
 
   return {
     suggestions,
