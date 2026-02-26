@@ -27,6 +27,8 @@ export function Generator() {
   const promptNodeId = useStore((state) => state.promptNodeId);
   const modelNodeId = useStore((state) => state.modelNodeId);
   const seedNodeId = useStore((state) => state.seedNodeId);
+  const queueSize = useStore((state) => state.queueSize);
+  const setQueueSize = useStore((state) => state.setQueueSize);
 
   // Initial fetch of history
   useEffect(() => {
@@ -75,8 +77,16 @@ export function Generator() {
         setProgress(p);
       }
       
+      if (data.type === "status" && data.data?.status?.exec_info) {
+        if (data.data.status.exec_info.queue_remaining === 0) {
+          setIsGenerating(false);
+          setProgress(0);
+        } else {
+          setIsGenerating(true);
+        }
+      }
+
       if (data.type === "executing" && data.data.node === null) {
-        setIsGenerating(false);
         setProgress(0);
       }
 
@@ -115,7 +125,6 @@ export function Generator() {
           });
 
           setCurrentImage(url);
-          setIsGenerating(false);
           setProgress(0);
         }
       }
@@ -137,13 +146,15 @@ export function Generator() {
     setProgress(0);
 
     try {
-      await queuePrompt(serverUrl, clientId, prompt, selectedModel, customWorkflow, {
-        promptNodeId,
-        modelNodeId,
-        seedNodeId,
-        sampler: selectedSampler,
-        scheduler: selectedScheduler
-      });
+      for (let i = 0; i < queueSize; i++) {
+        await queuePrompt(serverUrl, clientId, prompt, selectedModel, customWorkflow, {
+          promptNodeId,
+          modelNodeId,
+          seedNodeId,
+          sampler: selectedSampler,
+          scheduler: selectedScheduler
+        });
+      }
 
       // Task PROMPT-002: Save prompt to history
       const promptItem = { 
@@ -164,7 +175,7 @@ export function Generator() {
       setError("Failed to queue prompt. Is ComfyUI running?");
       setIsGenerating(false);
     }
-  }, [isGenerating, serverUrl, clientId, prompt, selectedModel, customWorkflow, promptNodeId, modelNodeId, seedNodeId, selectedSampler, selectedScheduler, setProgress, setIsGenerating, addPromptToHistory]);
+  }, [isGenerating, queueSize, serverUrl, clientId, prompt, selectedModel, customWorkflow, promptNodeId, modelNodeId, seedNodeId, selectedSampler, selectedScheduler, setProgress, setIsGenerating, addPromptToHistory]);
 
 
   return (
@@ -179,6 +190,8 @@ export function Generator() {
         promptHistory={promptHistory}
         setPromptHistory={setPromptHistory}
         error={error}
+        queueSize={queueSize}
+        setQueueSize={setQueueSize}
       />
     </div>
   );

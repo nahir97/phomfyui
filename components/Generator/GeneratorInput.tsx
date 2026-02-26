@@ -16,6 +16,8 @@ interface GeneratorInputProps {
   promptHistory: any[];
   setPromptHistory: (history: any[]) => void;
   error: string | null;
+  queueSize: number;
+  setQueueSize: (size: number) => void;
 }
 
 export const GeneratorInput = memo(function GeneratorInput({
@@ -25,7 +27,9 @@ export const GeneratorInput = memo(function GeneratorInput({
   onGenerate,
   promptHistory,
   setPromptHistory,
-  error
+  error,
+  queueSize,
+  setQueueSize
 }: GeneratorInputProps) {
   const { suggestions, isLoading, updateActiveWord, insertTag } = useTagAutocomplete();
   const textareaRef = useRef<HTMLTextAreaElement>(null);
@@ -115,6 +119,18 @@ export const GeneratorInput = memo(function GeneratorInput({
                 className="flex-1 bg-transparent border-none text-base font-medium text-white placeholder:text-white/20 focus:ring-0 resize-none min-h-[56px] max-h-[160px] py-4 px-3 overflow-y-auto no-scrollbar leading-tight"
                 rows={1}
               />
+              <button
+                onClick={() => {
+                  const sizes = [1, 2, 4, 8, 16, 32];
+                  const currentIndex = sizes.indexOf(queueSize);
+                  const nextIndex = (currentIndex + 1) % sizes.length;
+                  setQueueSize(sizes[nextIndex]);
+                }}
+                className="h-12 min-w-12 px-2 rounded-xl flex items-center justify-center bg-white/5 text-white/60 hover:bg-white/10 hover:text-white transition-all shrink-0 mb-1 font-semibold text-sm"
+                title="Queue Size"
+              >
+                {queueSize}x
+              </button>
               
               <button
                 onClick={onGenerate}

@@ -80,6 +80,7 @@ interface AppState {
   selectedSampler: string;
   schedulers: string[];
   selectedScheduler: string;
+  queueSize: number;
   workflow: any;
   promptNodeId: string;
   negativePromptNodeId: string;
@@ -101,6 +102,7 @@ interface AppState {
   setSelectedSampler: (sampler: string) => void;
   setSchedulers: (schedulers: string[]) => void;
   setSelectedScheduler: (scheduler: string) => void;
+  setQueueSize: (size: number) => void;
   setWorkflow: (workflow: any) => void;
   setPromptNodeId: (id: string) => void;
   setNegativePromptNodeId: (id: string) => void;
@@ -125,6 +127,7 @@ export const useStore = create<AppState>()(
       selectedSampler: 'euler_ancestral',
       schedulers: [],
       selectedScheduler: 'beta',
+      queueSize: 1,
       workflow: null,
       promptNodeId: "6",
       negativePromptNodeId: "7",
@@ -163,6 +166,7 @@ export const useStore = create<AppState>()(
       setSelectedSampler: (selectedSampler) => set({ selectedSampler }),
       setSchedulers: (schedulers) => set({ schedulers }),
       setSelectedScheduler: (selectedScheduler) => set({ selectedScheduler }),
+      setQueueSize: (queueSize) => set({ queueSize }),
       setWorkflow: (workflow) => set({ workflow }),
       setPromptNodeId: (promptNodeId) => set({ promptNodeId }),
       setNegativePromptNodeId: (negativePromptNodeId) => set({ negativePromptNodeId }),
@@ -180,6 +184,7 @@ export const useStore = create<AppState>()(
         selectedModel: state.selectedModel,
         selectedSampler: state.selectedSampler,
         selectedScheduler: state.selectedScheduler,
+        queueSize: state.queueSize,
         workflow: state.workflow,
         promptNodeId: state.promptNodeId,
         negativePromptNodeId: state.negativePromptNodeId,
