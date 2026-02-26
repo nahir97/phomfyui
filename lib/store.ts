@@ -73,6 +73,7 @@ interface AppState {
   progress: number;
   gallery: GalleryImage[];
   promptHistory: PromptHistoryItem[];
+  sessionImages: GalleryImage[];
   currentImage: string | null;
   models: string[];
   selectedModel: string;
@@ -95,6 +96,9 @@ interface AppState {
   setGallery: (gallery: GalleryImage[]) => void;
   setPromptHistory: (history: PromptHistoryItem[]) => void;
   addPromptToHistory: (prompt: PromptHistoryItem) => void;
+  setSessionImages: (images: GalleryImage[]) => void;
+  addToSessionImages: (image: GalleryImage) => void;
+  clearSessionImages: () => void;
   setCurrentImage: (url: string | null) => void;
   setModels: (models: string[]) => void;
   setSelectedModel: (model: string) => void;
@@ -120,6 +124,7 @@ export const useStore = create<AppState>()(
       progress: 0,
       gallery: [],
       promptHistory: [],
+      sessionImages: [],
       currentImage: null,
       models: [],
       selectedModel: 'novaAnimeXL_ilV140.safetensors',
@@ -159,6 +164,9 @@ export const useStore = create<AppState>()(
         if (exists) return state;
         return { promptHistory: [item, ...state.promptHistory] };
       }),
+      setSessionImages: (sessionImages) => set({ sessionImages }),
+      addToSessionImages: (image) => set((state) => ({ sessionImages: [image, ...state.sessionImages] })),
+      clearSessionImages: () => set({ sessionImages: [] }),
       setCurrentImage: (url) => set({ currentImage: url }),
       setModels: (models) => set({ models }),
       setSelectedModel: (model) => set({ selectedModel: model }),

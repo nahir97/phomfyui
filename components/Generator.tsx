@@ -19,6 +19,8 @@ export function Generator() {
   const promptHistory = useStore((state) => state.promptHistory);
   const setPromptHistory = useStore((state) => state.setPromptHistory);
   const addPromptToHistory = useStore((state) => state.addPromptToHistory);
+  const addToSessionImages = useStore((state) => state.addToSessionImages);
+  const clearSessionImages = useStore((state) => state.clearSessionImages);
   const setCurrentImage = useStore((state) => state.setCurrentImage);
   const selectedModel = useStore((state) => state.selectedModel);
   const selectedSampler = useStore((state) => state.selectedSampler);
@@ -116,13 +118,16 @@ export function Generator() {
             }
           }
 
-          addToGallery({
+          const galleryImage = {
             id: uuidv4(),
             url,
             prompt: stateRef.current.prompt,
             timestamp: Date.now(),
             workflow: finalWorkflow
-          });
+          };
+
+          addToGallery(galleryImage);
+          addToSessionImages(galleryImage);
 
           setCurrentImage(url);
           setProgress(0);
@@ -144,6 +149,7 @@ export function Generator() {
     setError(null);
     setIsGenerating(true);
     setProgress(0);
+    clearSessionImages();
 
     try {
       for (let i = 0; i < queueSize; i++) {
@@ -175,8 +181,7 @@ export function Generator() {
       setError("Failed to queue prompt. Is ComfyUI running?");
       setIsGenerating(false);
     }
-  }, [isGenerating, queueSize, serverUrl, clientId, prompt, selectedModel, customWorkflow, promptNodeId, modelNodeId, seedNodeId, selectedSampler, selectedScheduler, setProgress, setIsGenerating, addPromptToHistory]);
-
+  }, [isGenerating, queueSize, serverUrl, clientId, prompt, selectedModel, customWorkflow, promptNodeId, modelNodeId, seedNodeId, selectedSampler, selectedScheduler, setProgress, setIsGenerating, addPromptToHistory, clearSessionImages]);
 
   return (
     <div className="h-[100dvh] w-full flex flex-col relative overflow-hidden">
