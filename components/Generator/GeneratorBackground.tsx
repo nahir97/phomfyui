@@ -4,6 +4,7 @@ import { memo, useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { Image as ImageIcon, Loader2, X, Download } from "lucide-react";
 import { useStore } from "@/lib/store";
+import { cn } from "@/lib/utils";
 
 export const GeneratorBackground = memo(function GeneratorBackground() {
   const currentImage = useStore((state) => state.currentImage);
@@ -11,6 +12,8 @@ export const GeneratorBackground = memo(function GeneratorBackground() {
   const progress = useStore((state) => state.progress);
   const sessionImages = useStore((state) => state.sessionImages);
   const queueSize = useStore((state) => state.queueSize);
+  
+  const clearSessionImages = useStore((state) => state.clearSessionImages);
   
   const [selectedImage, setSelectedImage] = useState<string | null>(null);
 
@@ -58,7 +61,7 @@ export const GeneratorBackground = memo(function GeneratorBackground() {
 
       {/* Loading Overlay */}
       <AnimatePresence>
-        {isGenerating && (
+        {(isGenerating || sessionImages.length > 0) && (
           <motion.div 
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
@@ -66,13 +69,15 @@ export const GeneratorBackground = memo(function GeneratorBackground() {
             className="absolute inset-0 z-20 bg-black/80 backdrop-blur-md flex flex-col items-center justify-start p-8 pt-[max(env(safe-area-inset-top),4rem)] overflow-y-auto no-scrollbar pointer-events-auto"
           >
             <div className="w-full max-w-4xl flex flex-col">
-              <div className="w-full h-1.5 bg-white/10 rounded-full mb-8 overflow-hidden shrink-0 mt-4">
-                <motion.div
-                  className="h-full bg-accent shadow-[0_0_20px_var(--color-accent)]"
-                  initial={{ width: 0 }}
-                  animate={{ width: `${progress}%` }}
-                />
-              </div>
+              {isGenerating && (
+                <div className="w-full h-1.5 bg-white/10 rounded-full mb-8 overflow-hidden shrink-0 mt-4">
+                  <motion.div
+                    className="h-full bg-accent shadow-[0_0_20px_var(--color-accent)]"
+                    initial={{ width: 0 }}
+                    animate={{ width: `${progress}%` }}
+                  />
+                </div>
+              )}
 
               <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-4 w-full pb-32">
                 <AnimatePresence>
