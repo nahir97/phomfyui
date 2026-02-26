@@ -66,17 +66,7 @@ export const GeneratorBackground = memo(function GeneratorBackground() {
             className="absolute inset-0 z-20 bg-black/80 backdrop-blur-md flex flex-col items-center justify-start p-8 pt-[max(env(safe-area-inset-top),4rem)] overflow-y-auto no-scrollbar pointer-events-auto"
           >
             <div className="w-full max-w-4xl flex flex-col">
-              <div className="flex items-center gap-4 mb-8">
-                <Loader2 className="text-accent animate-spin shrink-0" size={40} />
-                <div className="flex flex-col">
-                  <p className="font-display text-2xl md:text-3xl font-bold uppercase italic tracking-tighter text-accent">
-                    Generating {sessionImages.length} / {queueSize}
-                  </p>
-                  <p className="text-sm font-medium tracking-widest text-white/50">{Math.round(progress)}% Current</p>
-                </div>
-              </div>
-              
-              <div className="w-full h-1.5 bg-white/10 rounded-full mb-10 overflow-hidden shrink-0">
+              <div className="w-full h-1.5 bg-white/10 rounded-full mb-8 overflow-hidden shrink-0 mt-4">
                 <motion.div
                   className="h-full bg-accent shadow-[0_0_20px_var(--color-accent)]"
                   initial={{ width: 0 }}
